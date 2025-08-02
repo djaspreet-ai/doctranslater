@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}PDF Document Translator - Free Translation Service{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card">
+            <div class="card-body p-5">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold text-primary mb-3">
+                        <i class="fas fa-language me-3"></i>
+                        PDF Document Translator
+                    </h1>
+                    <p class="lead text-muted mb-0">
+                        Translate your PDF documents to any language while preserving formatting
+                    </p>
+                </div>
+
+                <!-- Upload Form -->
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <!-- File Upload Area -->
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h4 class="mb-3">Drop your PDF here or click to browse</h4>
+                        <p class="text-muted mb-3">
+                            Supports PDF files up to 16MB
+                        </p>
+                        <input type="file" id="fileInput" name="file" accept=".pdf" style="display: none;">
+                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>
+                            Choose PDF File
+                        </button>
+                    </div>
+
+                    <!-- Selected File Info -->
+                    <div id="fileInfo" class="alert alert-info mt-3" style="display: none;">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        <span id="fileName"></span>
+                        <span class="float-end">
+                            <span id="fileSize"></span>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </span>
+                    </div>
+
+                    <!-- Language Selection -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label for="targetLanguage" class="form-label fw-semibold">
+                                <i class="fas fa-globe me-2"></i>
+                                Translate to:
+                            </label>
+                            <select class="form-select" id="targetLanguage" name="target_language" required>
+                                <option value="">Select target language</option>
+                                {% for code, name in languages.items() %}
+                                <option value="{{ code }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="translateBtn">
+                                <i class="fas fa-language me-2"></i>
+                                Translate Document
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Loading Spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div>
+                        <div class="spinner"></div>
+                        <p class="text-center mt-3 fw-semibold">Translating your document...</p>
+                        <p class="text-center text-muted">This may take a few moments</p>
+                    </div>
+                </div>
+
+                <!-- Result Area -->
+                <div id="resultArea" style="display: none;">
+                    <!-- Success Result -->
+                    <div id="successResult" class="alert alert-success">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Translation Completed Successfully!
+                        </h5>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <small class="text-muted">Source Language:</small><br>
+                                <span id="sourceLanguage" class="fw-semibold"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Target Language:</small><br>
+                                <span id="targetLanguageResult" class="fw-semibold"></span>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="#" id="downloadLink" class="btn btn-success btn-lg">
+                                <i class="fas fa-download me-2"></i>
+                                Download Translated PDF
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Error Result -->
+                    <div id="errorResult" class="alert alert-danger" style="display: none;">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Translation Failed
+                        </h5>
+                        <p id="errorMessage" class="mb-0"></p>
+                    </div>
+                </div>
+
+                <!-- Features Section -->
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h6 class="fw-semibold">Privacy First</h6>
+                        <small class="text-muted">Your documents are processed securely and deleted after translation</small>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <h6 class="fw-semibold">Format Preserved</h6>
+                        <small class="text-muted">Original document formatting and layout are maintained</small>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h6 class="fw-semibold">Fast & Free</h6>
+                        <small class="text-muted">Quick translation using LibreTranslate API at no cost</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const uploadForm = document.getElementById('uploadForm');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultArea = document.getElementById('resultArea');
+    const successResult = document.getElementById('successResult');
+    const errorResult = document.getElementById('errorResult');
+    const translateBtn = document.getElementById('translateBtn');
+
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
+    });
+
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        if (file.type !== 'application/pdf') {
+            alert('Please select a PDF file.');
+            return;
+        }
+
+        if (file.size > 16 * 1024 * 1024) { // 16MB
+            alert('File size must be less than 16MB.');
+            return;
+        }
+
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'block';
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    window.clearFile = function() {
+        fileInput.value = '';
+        fileInfo.style.display = 'none';
+        resultArea.style.display = 'none';
+    };
+
+    // Form submission
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!fileInput.files[0]) {
+            alert('Please select a PDF file.');
+            return;
+        }
+
+        if (!document.getElementById('targetLanguage').value) {
+            alert('Please select a target language.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('target_language', document.getElementById('targetLanguage').value);
+
+        // Show loading state
+        loadingSpinner.style.display = 'flex';
+        translateBtn.disabled = true;
+        resultArea.style.display = 'none';
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingSpinner.style.display = 'none';
+            translateBtn.disabled = false;
+            resultArea.style.display = 'block';
+
+            if (data.success) {
+                document.getElementById('sourceLanguage').textContent = data.source_language;
+                document.getElementById('targetLanguageResult').textContent = data.target_language;
+                document.getElementById('downloadLink').href = data.download_url;
+                successResult.style.display = 'block';
+                errorResult.style.display = 'none';
+            } else {
+                document.getElementById('errorMessage').textContent = data.message;
+                errorResult.style.display = 'block';
+                successResult.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            loadingSpinner.style.display = 'none';
+            translateBtn.disabled = false;
+            resultArea.style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'An error occurred during translation. Please try again.';
+            errorResult.style.display = 'block';
+            successResult.style.display = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}
