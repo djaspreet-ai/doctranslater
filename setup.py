@@ -19,7 +19,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/your-username/pdf-document-translator",
-    py_modules=["pdf_translator"],
+    py_modules=["app"],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: End Users/Desktop",
@@ -37,7 +37,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "pdf-translator=pdf_translator:main",
+            "pdf-translator-web=app:main",
         ],
     },
 )
