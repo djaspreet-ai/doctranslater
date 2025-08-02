@@ -333,7 +333,7 @@ def upload_file():
         if result['success']:
             # Return download link
             output_filename = os.path.basename(result['output_file'])
-            result['download_url'] = url_for('download_file', filename=output_filename)
+            result['download_url'] = f'/download/{output_filename}'
         
         return jsonify(result)
     
